@@ -13,36 +13,50 @@ if 'chat' not in st.session_state:
 # Initialize analyzer
 analyzer = SentimentIntensityAnalyzer()
 
-# Keywords
-crisis_keywords = ["i want to die", "i don't want to live", "suicidal", "kill myself", "end it all"]
-negative_keywords = [
-    "cry", "crying", "cried", "want to cry", "not ok", "not okay", "not fine", "sad", "depressed",
-    "tension", "worried", "anxious", "stressed", "scared", "panicking", "i am broken",
-    "i feel low", "helpless", "overwhelmed", "alone", "i hate this", "afraid", "fear"
+# 🚨 Critical phrases that indicate crisis
+crisis_keywords = [
+    "i want to die", "i don't want to live", "kill myself", "end my life", "end it all", 
+    "jump from", "fall from", "want to fall", "want to jump", "hurt myself", 
+    "i want to end it", "suicidal", "take my life", "life is meaningless"
 ]
+
+# 😔 Negative emotional expressions
+negative_keywords = [
+    "cry", "crying", "cried", "not ok", "not okay", "not fine", "i am sad", "depressed", 
+    "tense", "worried", "anxious", "scared", "fear", "afraid", "panicking", 
+    "broken", "feel low", "helpless", "overwhelmed", "alone", "i hate this", 
+    "frustrated", "angry", "irritated", "i feel down", "hopeless", "i am scared", 
+    "lost", "worthless", "lonely"
+]
+
+# 😊 Positive emotional expressions
 positive_keywords = [
-    "happy", "celebrate", "excited", "dancing", "rank", "topper", "won", "yay", "enjoy",
-    "smiling", "ice cream", "icecream", "chocolate", "relaxed", "proud", "calm", "peaceful",
-    "joyful", "feeling great"
+    "happy", "celebrate", "excited", "dancing", "topper", "won", "yay", "enjoy",
+    "smiling", "ice cream", "icecream", "chocolate", "relaxed", "proud", "calm", 
+    "peaceful", "joyful", "feeling great", "got a job", "promotion", "rank", 
+    "satisfied", "loved", "grateful", "content", "motivated"
 ]
 
 def get_bot_reply(user_message):
     text = user_message.lower()
-    compound = analyzer.polarity_scores(text)['compound']
+    score = analyzer.polarity_scores(text)
+    compound = score['compound']
 
-    def keyword_in(keywords):
-        return any(kw in text for kw in keywords)
+    def keyword_match(keywords):
+        return any(keyword in text for keyword in keywords)
 
-    # 🚨 Crisis check
-    if keyword_in(crisis_keywords):
+    # Crisis check
+    if keyword_match(crisis_keywords):
         mood = "🚨 Urgent"
-        reply = ("I'm really concerned about what you're feeling. You're **not alone**. 💙 "
-                 "Please consider talking to a friend, a trusted adult, or calling a mental health helpline. "
-                 "**You matter.**")
-    elif keyword_in(negative_keywords):
+        reply = (
+            "I'm really concerned about what you're feeling. You're **not alone** 💙\n\n"
+            "Please consider reaching out to a friend, a counselor, or a mental health professional.\n"
+            "You are **valuable** and your life matters deeply. 🫂"
+        )
+    elif keyword_match(negative_keywords):
         mood = "😔 Negative"
         reply = "I'm really sorry you're feeling this way. You're not alone, and I'm here for you 💙"
-    elif keyword_in(positive_keywords):
+    elif keyword_match(positive_keywords):
         mood = "😊 Positive"
         reply = "That's amazing! I'm so happy for you! Keep it up and celebrate your wins 🎉"
     elif compound >= 0.3:
@@ -57,7 +71,7 @@ def get_bot_reply(user_message):
 
     return f"{reply}\n\n**(Detected Mood: {mood})**"
 
-# Chat input form
+# Chat UI
 with st.form(key='chat_form', clear_on_submit=True):
     user_input = st.text_input("Type your message:")
     submit = st.form_submit_button("Send")
@@ -67,13 +81,13 @@ with st.form(key='chat_form', clear_on_submit=True):
         bot_response = get_bot_reply(user_input)
         st.session_state.chat.append(("EmpaBot", bot_response))
 
-# Show conversation
+# Show messages
 for sender, message in st.session_state.chat:
     if sender == "You":
         st.markdown(f"🧍 **{sender}:** {message}")
     else:
         st.markdown(f"🤖 **{sender}:** {message}")
 
-# Footer note
+# Feedback line
 st.markdown("---")
-st.markdown("⚠️ *If my response didn't feel accurate, please share feedback. I'm learning to understand human emotions better.*")
+st.markdown("📝 *If something doesn’t feel right or if you’d like to improve me, feel free to share your suggestions!*")
