@@ -1,5 +1,6 @@
 import streamlit as st
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import re
 
 st.set_page_config(page_title="EmpaBot – Mental Health Chatbot", page_icon="💬")
 
@@ -13,17 +14,22 @@ if 'chat' not in st.session_state:
 # Initialize VADER
 analyzer = SentimentIntensityAnalyzer()
 
-# Smart keyword matching
+# Emotion keyword patterns
+negative_patterns = ['cry', 'fail', 'oh no', 'stress', 'tension', 'nervous', 'worry', 'scare']
+positive_patterns = ['rank', 'topper', 'dance', 'enjoy', 'yay', 'won', 'celebrate', 'happy']
+
 def get_bot_reply(user_message):
     text = user_message.lower()
-    scores = analyzer.polarity_scores(text)
-    compound = scores['compound']
+    compound = analyzer.polarity_scores(text)['compound']
 
-    # Enhanced manual emotion detection
-    if any(word in text for word in ['cry', 'failed', 'oh no', 'stress', 'tension', 'nervous', 'worry', 'scare']):
+    # Keyword pattern matching
+    def match_any(patterns):
+        return any(re.search(rf"\b{pattern}\w*\b", text) for pattern in patterns)
+
+    if match_any(negative_patterns):
         mood = "😔 Negative"
         reply = "I'm really sorry you're feeling this way. You're not alone, and I'm here for you 💙"
-    elif any(word in text for word in ['rank', 'topper', 'dance', 'enjoy', 'yay', 'won', 'celebrate']):
+    elif match_any(positive_patterns):
         mood = "😊 Positive"
         reply = "That's amazing! I'm so happy for you! Keep it up and celebrate your wins 🎉"
     elif compound >= 0.3:
