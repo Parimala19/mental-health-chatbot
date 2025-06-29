@@ -10,34 +10,39 @@ st.markdown("Hi there! I'm here to listen. How are you feeling today?")
 if 'chat' not in st.session_state:
     st.session_state.chat = []
 
-# Initialize VADER
+# Initialize analyzer
 analyzer = SentimentIntensityAnalyzer()
 
-# Expanded emotion keyword bank
+# Keywords
+crisis_keywords = ["i want to die", "i don't want to live", "suicidal", "kill myself", "end it all"]
 negative_keywords = [
     "cry", "crying", "cried", "want to cry", "not ok", "not okay", "not fine", "sad", "depressed",
     "tension", "worried", "anxious", "stressed", "scared", "panicking", "i am broken",
-    "i feel low", "helpless", "overwhelmed", "alone", "i hate this"
+    "i feel low", "helpless", "overwhelmed", "alone", "i hate this", "afraid", "fear"
 ]
-
 positive_keywords = [
     "happy", "celebrate", "excited", "dancing", "rank", "topper", "won", "yay", "enjoy",
-    "smiling", "ice cream", "chocolate", "relaxed", "proud", "calm", "peaceful", "feeling great"
+    "smiling", "ice cream", "icecream", "chocolate", "relaxed", "proud", "calm", "peaceful",
+    "joyful", "feeling great"
 ]
 
 def get_bot_reply(user_message):
     text = user_message.lower()
-    score = analyzer.polarity_scores(text)
-    compound = score['compound']
+    compound = analyzer.polarity_scores(text)['compound']
 
-    # Manual emotion keyword detection
-    def keyword_in_text(keywords):
+    def keyword_in(keywords):
         return any(kw in text for kw in keywords)
 
-    if keyword_in_text(negative_keywords):
+    # 🚨 Crisis check
+    if keyword_in(crisis_keywords):
+        mood = "🚨 Urgent"
+        reply = ("I'm really concerned about what you're feeling. You're **not alone**. 💙 "
+                 "Please consider talking to a friend, a trusted adult, or calling a mental health helpline. "
+                 "**You matter.**")
+    elif keyword_in(negative_keywords):
         mood = "😔 Negative"
         reply = "I'm really sorry you're feeling this way. You're not alone, and I'm here for you 💙"
-    elif keyword_in_text(positive_keywords):
+    elif keyword_in(positive_keywords):
         mood = "😊 Positive"
         reply = "That's amazing! I'm so happy for you! Keep it up and celebrate your wins 🎉"
     elif compound >= 0.3:
@@ -52,7 +57,7 @@ def get_bot_reply(user_message):
 
     return f"{reply}\n\n**(Detected Mood: {mood})**"
 
-# Chat form
+# Chat input form
 with st.form(key='chat_form', clear_on_submit=True):
     user_input = st.text_input("Type your message:")
     submit = st.form_submit_button("Send")
@@ -62,13 +67,13 @@ with st.form(key='chat_form', clear_on_submit=True):
         bot_response = get_bot_reply(user_input)
         st.session_state.chat.append(("EmpaBot", bot_response))
 
-# Chat display
+# Show conversation
 for sender, message in st.session_state.chat:
     if sender == "You":
         st.markdown(f"🧍 **{sender}:** {message}")
     else:
         st.markdown(f"🤖 **{sender}:** {message}")
 
-# Feedback note
+# Footer note
 st.markdown("---")
-st.markdown("⚠️ *If my response didn't feel accurate, feel free to tell me — I'm still learning to understand emotions better!*")
+st.markdown("⚠️ *If my response didn't feel accurate, please share feedback. I'm learning to understand human emotions better.*")
